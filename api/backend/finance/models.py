@@ -5,18 +5,6 @@ from django.db.models import F, Q
 from django.core.validators import MinValueValidator
 from django.db import models
 
-
-def seed_categories():
-    categories = [
-        ("Salary", "INCOME"),
-        ("Freelance", "INCOME"),
-        ("Food", "EXPENSE"),
-        ("Rent", "EXPENSE"),
-    ]
-
-    for name, type in categories:
-        Category.objects.get_or_create(name=name, type=type)
-
 class Goal(models.Model):
     class Status(models.TextChoices):
         ACTIVE = "active", "Active"
@@ -102,6 +90,7 @@ class Transaction(models.Model):
         on_delete=models.PROTECT,
         related_name="transactions",
     )
+    title = models.CharField(max_length=64)
     amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
     description = models.CharField(max_length=255, blank=True)
     transaction_date = models.DateField()

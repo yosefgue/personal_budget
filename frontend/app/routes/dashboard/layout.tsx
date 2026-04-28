@@ -27,11 +27,6 @@ export default function Page() {
             orientation="vertical"
             className="mr-2 data-vertical:h-4 data-vertical:self-auto"
           />
-          <Breadcrumb>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="#">Home</BreadcrumbLink>
-            </BreadcrumbItem>
-          </Breadcrumb>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4">
           {isNavigating && (
@@ -39,6 +34,7 @@ export default function Page() {
                 <Spinner />
              </div>
           )}
+          <Outlet />
         </div>
       </SidebarInset>
     </SidebarProvider>
