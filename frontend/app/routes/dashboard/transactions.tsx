@@ -2,7 +2,6 @@ import * as React from "react"
 import { useEffect, useState } from "react"
 import {
   IconCalendar,
-  IconEdit,
   IconReceipt,
   IconTrash,
 } from "@tabler/icons-react"
@@ -68,10 +67,14 @@ import {
 
 type Transaction = {
   id: number
-  wallet_name: string
   title: string
   amount: string
   transaction_date: string
+  category?: number | {
+    id?: number
+    type?: "income" | "expense"
+  }
+  category_type?: "income" | "expense"
 }
 
 type Category = {
@@ -94,66 +97,6 @@ const categories: Category[] = [
   { id: 10, name: "Healthcare", type: "expense" },
   { id: 11, name: "Travel", type: "expense" },
   { id: 12, name: "Other Expense", type: "expense" },
-]
-
-const columns: ColumnDef<Transaction>[] = [
-  {
-    accessorKey: "title",
-    header: "Title",
-  },
-  {
-    accessorKey: "wallet_name",
-    header: "Wallet",
-  },
-  {
-    accessorKey: "transaction_date",
-    header: "Date",
-  },
-  {
-    accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
-    cell: ({ row }) => {
-      const amount = row.getValue("amount") as string
-
-      return <div className="text-right font-medium">{amount} dh</div>
-    },
-  },
-  {
-    id: "actions",
-    header: () => <div className="text-right">Actions</div>,
-    cell: ({ row }) => {
-      const transaction = row.original
-
-      return (
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              console.log("Edit transaction", transaction.id)
-            }}
-          >
-            <IconEdit className="h-4 w-4" />
-            <span className="sr-only">Edit transaction</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive"
-            onClick={() => {
-              console.log("Delete transaction", transaction.id)
-            }}
-          >
-            <IconTrash className="h-4 w-4" />
-            <span className="sr-only">Delete transaction</span>
-          </Button>
-        </div>
-      )
-    },
-  },
 ]
 
 const formSchema = z.object({
@@ -192,13 +135,48 @@ function formatDateForDisplay(date: Date) {
   })
 }
 
+function parseDjangoDate(date: string) {
+  return new Date(`${date}T00:00:00`)
+}
+
+function getTransactionCategoryId(transaction: Transaction) {
+  if (typeof transaction.category === "number") {
+    return String(transaction.category)
+  }
+
+  if (typeof transaction.category === "object" && transaction.category?.id) {
+    return String(transaction.category.id)
+  }
+
+  return ""
+}
+
+function isIncomeTransaction(transaction: Transaction) {
+  if (transaction.category_type) {
+    return transaction.category_type.toLowerCase() === "income"
+  }
+
+  if (typeof transaction.category === "object" && transaction.category?.type) {
+    return transaction.category.type.toLowerCase() === "income"
+  }
+
+  const categoryId = getTransactionCategoryId(transaction)
+  const category = categories.find((item) => String(item.id) === categoryId)
+
+  return category?.type === "income"
+}
+
 export default function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [dialogOpen, setDialogOpen] = useState(false)
 
-  const form = useForm<FormValues>({
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null)
+
+  const createForm = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
@@ -207,6 +185,66 @@ export default function Transactions() {
       transaction_date: new Date(),
     },
   })
+
+  const editForm = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      amount: "",
+      category: "",
+      transaction_date: new Date(),
+    },
+  })
+
+  function openEditDialog(transaction: Transaction) {
+    setSelectedTransaction(transaction)
+
+    editForm.reset({
+      title: transaction.title,
+      amount: transaction.amount,
+      category: getTransactionCategoryId(transaction),
+      transaction_date: parseDjangoDate(transaction.transaction_date),
+    })
+
+    setEditDialogOpen(true)
+  }
+
+  const columns: ColumnDef<Transaction>[] = [
+    {
+      accessorKey: "title",
+      header: "Title",
+    },
+    {
+      accessorKey: "transaction_date",
+      header: "Date",
+    },
+    {
+      accessorKey: "amount",
+      header: () => <div className="text-right">Amount</div>,
+      cell: ({ row }) => {
+        const amount = Number(row.getValue("amount"))
+        const transaction = row.original
+        const isIncome = isIncomeTransaction(transaction)
+
+        return (
+          <div
+            className={
+              isIncome
+                ? "text-right font-medium text-green-600"
+                : "text-right font-medium text-red-600"
+            }
+          >
+            {isIncome ? "+" : "-"}
+            {amount.toLocaleString("fr-MA", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}{" "}
+            dh
+          </div>
+        )
+      },
+    },
+  ]
 
   const table = useReactTable({
     data: transactions,
@@ -246,7 +284,7 @@ export default function Transactions() {
     loadTransactions()
   }, [])
 
-  async function onSubmit(data: FormValues) {
+  async function onCreateSubmit(data: FormValues) {
     try {
       const payload = {
         title: data.title,
@@ -256,7 +294,7 @@ export default function Transactions() {
       }
 
       const response = await fetch(
-        "http://127.0.0.1:8000/api/transactions/create/",
+        "http://127.0.0.1:8000/api/transactions/",
         {
           method: "POST",
           headers: {
@@ -277,22 +315,100 @@ export default function Transactions() {
 
       toast.success("Transaction created successfully.")
 
-      form.reset({
+      createForm.reset({
         title: "",
         amount: "",
         category: "",
         transaction_date: new Date(),
       })
 
-      setDialogOpen(false)
+      setCreateDialogOpen(false)
     } catch (error) {
       console.error(error)
       toast.error("Could not create transaction.")
     }
   }
 
-  const transactionDialog = (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+  async function onEditSubmit(data: FormValues) {
+    if (!selectedTransaction) {
+      return
+    }
+
+    try {
+      const payload = {
+        title: data.title,
+        amount: data.amount,
+        category: Number(data.category),
+        transaction_date: formatDateForDjango(data.transaction_date),
+      }
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/transactions/${selectedTransaction.id}/`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        console.error(errorData)
+        throw new Error("Failed to update transaction")
+      }
+
+      await fetchTransactions()
+
+      toast.success("Transaction updated successfully.")
+
+      setEditDialogOpen(false)
+      setSelectedTransaction(null)
+    } catch (error) {
+      console.error(error)
+      toast.error("Could not update transaction.")
+    }
+  }
+
+  async function deleteTransaction() {
+    if (!selectedTransaction) {
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/transactions/${selectedTransaction.id}/`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        console.error(errorData)
+        throw new Error("Failed to delete transaction")
+      }
+
+      await fetchTransactions()
+
+      toast.success("Transaction deleted successfully.")
+
+      setEditDialogOpen(false)
+      setSelectedTransaction(null)
+    } catch (error) {
+      console.error(error)
+      toast.error("Could not delete transaction.")
+    }
+  }
+
+  const createTransactionDialog = (
+    <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
       <DialogTrigger asChild>
         <Button>Add transaction</Button>
       </DialogTrigger>
@@ -306,21 +422,23 @@ export default function Transactions() {
         </DialogHeader>
 
         <form
-          id="transaction-form"
-          onSubmit={form.handleSubmit(onSubmit)}
+          id="create-transaction-form"
+          onSubmit={createForm.handleSubmit(onCreateSubmit)}
           className="space-y-4"
         >
           <FieldGroup>
             <Controller
               name="title"
-              control={form.control}
+              control={createForm.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="transaction-title">Title</FieldLabel>
+                  <FieldLabel htmlFor="create-transaction-title">
+                    Title
+                  </FieldLabel>
 
                   <Input
                     {...field}
-                    id="transaction-title"
+                    id="create-transaction-title"
                     aria-invalid={fieldState.invalid}
                     placeholder="Groceries"
                     autoComplete="off"
@@ -335,14 +453,16 @@ export default function Transactions() {
 
             <Controller
               name="amount"
-              control={form.control}
+              control={createForm.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="transaction-amount">Amount</FieldLabel>
+                  <FieldLabel htmlFor="create-transaction-amount">
+                    Amount
+                  </FieldLabel>
 
                   <Input
                     {...field}
-                    id="transaction-amount"
+                    id="create-transaction-amount"
                     type="number"
                     step="0.01"
                     min="0.01"
@@ -360,7 +480,7 @@ export default function Transactions() {
 
             <Controller
               name="category"
-              control={form.control}
+              control={createForm.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Category</FieldLabel>
@@ -391,7 +511,7 @@ export default function Transactions() {
 
             <Controller
               name="transaction_date"
-              control={form.control}
+              control={createForm.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Transaction date</FieldLabel>
@@ -445,9 +565,191 @@ export default function Transactions() {
             </Button>
           </DialogClose>
 
-          <Button type="submit" form="transaction-form">
+          <Button type="submit" form="create-transaction-form">
             Save
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+
+  const editTransactionDialog = (
+    <Dialog
+      open={editDialogOpen}
+      onOpenChange={(open) => {
+        setEditDialogOpen(open)
+
+        if (!open) {
+          setSelectedTransaction(null)
+        }
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit transaction</DialogTitle>
+          <DialogDescription>
+            Modify this transaction or delete it permanently.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form
+          id="edit-transaction-form"
+          onSubmit={editForm.handleSubmit(onEditSubmit)}
+          className="space-y-4"
+        >
+          <FieldGroup>
+            <Controller
+              name="title"
+              control={editForm.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="edit-transaction-title">
+                    Title
+                  </FieldLabel>
+
+                  <Input
+                    {...field}
+                    id="edit-transaction-title"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Groceries"
+                    autoComplete="off"
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="amount"
+              control={editForm.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="edit-transaction-amount">
+                    Amount
+                  </FieldLabel>
+
+                  <Input
+                    {...field}
+                    id="edit-transaction-amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="120.00"
+                    autoComplete="off"
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="category"
+              control={editForm.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Category</FieldLabel>
+
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger aria-invalid={fieldState.invalid}>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem
+                          key={category.id}
+                          value={String(category.id)}
+                        >
+                          {category.name} · {category.type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="transaction_date"
+              control={editForm.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Transaction date</FieldLabel>
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        aria-invalid={fieldState.invalid}
+                        className="w-full justify-start !bg-white text-left font-normal !text-black hover:!bg-gray-100 hover:!text-black"
+                      >
+                        <IconCalendar className="mr-2 h-4 w-4" />
+
+                        {field.value
+                          ? formatDateForDisplay(field.value)
+                          : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+
+                    <PopoverContent
+                      align="start"
+                      className="w-auto !bg-white p-0 !text-black"
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={(date) => {
+                          if (date) {
+                            field.onChange(date)
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </form>
+
+        <DialogFooter className="gap-2 sm:justify-between">
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={deleteTransaction}
+          >
+            <IconTrash className="mr-2 h-4 w-4" />
+            Delete
+          </Button>
+
+          <div className="flex gap-2">
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
+            </DialogClose>
+
+            <Button type="submit" form="edit-transaction-form">
+              Save changes
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -463,7 +765,9 @@ export default function Transactions() {
 
   return (
     <section className="w-full space-y-6">
-      <div className="flex justify-start">{transactionDialog}</div>
+      <div className="flex justify-start">{createTransactionDialog}</div>
+
+      {editTransactionDialog}
 
       {transactions.length === 0 ? (
         <Empty className="border border-dashed">
@@ -501,7 +805,11 @@ export default function Transactions() {
 
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => openEditDialog(row.original)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(

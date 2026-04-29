@@ -16,12 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from finance.views import WalletListView, TransactionListView, TransactionCreateView
+from finance.views import WalletListView, TransactionListCreateView, TransactionDetailView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path("api/wallets/", WalletListView.as_view(), name="wallet-list"),
-    path("api/transactions/", TransactionListView.as_view(), name="transaction-list"),
-    path("api/transactions/create/", TransactionCreateView.as_view(), name="transaction-create"),
+    path("api/transactions/", TransactionListCreateView.as_view(), name="transaction-list-create"),
+    path("api/transactions/<int:pk>/", TransactionDetailView.as_view(), name="transaction-detail"),
 ]
