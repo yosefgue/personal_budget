@@ -39,6 +39,7 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover"
 import { Calendar } from "~/components/ui/calendar"
+import { Switch } from "~/components/ui/switch"
 import {
   Dialog,
   DialogClose,
@@ -70,6 +71,7 @@ type Transaction = {
   title: string
   amount: string
   transaction_date: string
+  is_recurring: boolean
   category?: number | {
     id?: number
     type?: "income" | "expense"
@@ -113,6 +115,8 @@ const formSchema = z.object({
     }),
 
   category: z.string().min(1, "Category is required."),
+
+  is_recurring: z.boolean(),
 
   transaction_date: z.date(),
 })
@@ -182,6 +186,7 @@ export default function Transactions() {
       title: "",
       amount: "",
       category: "",
+      is_recurring: false,
       transaction_date: new Date(),
     },
   })
@@ -192,6 +197,7 @@ export default function Transactions() {
       title: "",
       amount: "",
       category: "",
+      is_recurring: false,
       transaction_date: new Date(),
     },
   })
@@ -203,6 +209,7 @@ export default function Transactions() {
       title: transaction.title,
       amount: transaction.amount,
       category: getTransactionCategoryId(transaction),
+      is_recurring: transaction.is_recurring ?? false,
       transaction_date: parseDjangoDate(transaction.transaction_date),
     })
 
@@ -290,6 +297,7 @@ export default function Transactions() {
         title: data.title,
         amount: data.amount,
         category: Number(data.category),
+        is_recurring: data.is_recurring,
         transaction_date: formatDateForDjango(data.transaction_date),
       }
 
@@ -319,6 +327,7 @@ export default function Transactions() {
         title: "",
         amount: "",
         category: "",
+        is_recurring: false,
         transaction_date: new Date(),
       })
 
@@ -339,6 +348,7 @@ export default function Transactions() {
         title: data.title,
         amount: data.amount,
         category: Number(data.category),
+        is_recurring: data.is_recurring,
         transaction_date: formatDateForDjango(data.transaction_date),
       }
 
@@ -510,6 +520,24 @@ export default function Transactions() {
             />
 
             <Controller
+              name="is_recurring"
+              control={createForm.control}
+              render={({ field }) => (
+                <Field orientation="horizontal">
+                  <FieldLabel htmlFor="create-transaction-recurring">
+                    Recurring monthly
+                  </FieldLabel>
+
+                  <Switch
+                    id="create-transaction-recurring"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </Field>
+              )}
+            />
+
+            <Controller
               name="transaction_date"
               control={createForm.control}
               render={({ field, fieldState }) => (
@@ -676,6 +704,24 @@ export default function Transactions() {
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="is_recurring"
+              control={editForm.control}
+              render={({ field }) => (
+                <Field orientation="horizontal">
+                  <FieldLabel htmlFor="edit-transaction-recurring">
+                    Recurring monthly
+                  </FieldLabel>
+
+                  <Switch
+                    id="edit-transaction-recurring"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
                 </Field>
               )}
             />
