@@ -3,8 +3,9 @@ from django.db.models import F
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 
-from .models import Wallet, Transaction, Category
-from .serializers import WalletSerializer, TransactionSerializer
+from .models import Goal, Wallet, Transaction, Category
+from .serializers import WalletSerializer, TransactionSerializer, GoalSerializer
+from .services import WalletGoalService
 
 
 class WalletListView(generics.ListAPIView):
@@ -126,3 +127,19 @@ class TransactionDetailView(generics.RetrieveUpdateDestroyAPIView):
         )
 
         instance.delete()
+
+class GoalView(generics.ListCreateAPIView):
+    serializer_class = GoalSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Goal.objects.filter(user=self.request.user)
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        goal = serializer.save(user=self.request.user)
+
+        WalletGoalService.create_wallet_goal(
+            user=self.request.user,
+            goal=goal,
+        )

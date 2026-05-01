@@ -7,6 +7,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "~/components/ui/field"
+import { Spinner } from "~/components/ui/spinner"
 import { Input } from "~/components/ui/input"
 import { IconPigMoney } from "@tabler/icons-react"
 import { useState } from "react"
@@ -20,11 +21,13 @@ export function LoginForm({
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState("");
     const navigate = useNavigate();
 
     const onSubmit: React.SubmitEventHandler<HTMLFormElement> = async (e) => {
         e.preventDefault();
+        setLoading(true);
     
         const values: LoginPayload = {
           username,
@@ -50,6 +53,7 @@ export function LoginForm({
           } else {
             setError("Login failed.");
           }
+          setLoading(false);
         }
       };
 
@@ -89,7 +93,9 @@ export function LoginForm({
             />
           </Field>
           <Field>
-            <Button type="submit">Login</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? <Spinner /> : "Login"}
+            </Button>
           </Field>
         </FieldGroup>
       </form>

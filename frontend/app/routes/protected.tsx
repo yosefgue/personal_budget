@@ -33,7 +33,7 @@ export default function ProtectedRoute() {
   }
 
   if (loading) {
-    return <div>Loading...</div>
+    return ;
   }
 
   if (!isAuth) {

@@ -1,6 +1,7 @@
 import { cn } from "~/lib/utils"
 import * as React from "react"
 import { Button } from "~/components/ui/button"
+import { Spinner } from "~/components/ui/spinner"
 import {
   Field,
   FieldDescription,
@@ -33,9 +34,11 @@ export function SignupForm({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const onSubmit: React.SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -70,6 +73,7 @@ export function SignupForm({
       } else {
         setError("Registration failed.");
       }
+      setLoading(false);
     }
   };
 
@@ -132,7 +136,9 @@ export function SignupForm({
           </Field>
           <FieldGroup>
             <Field>
-              <Button type="submit">Create Account</Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? <Spinner /> : "Create Account"}
+              </Button>
             </Field>
           </FieldGroup>
         </FieldGroup>
