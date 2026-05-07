@@ -11,9 +11,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarFooter,
 } from "~/components/ui/sidebar"
-import { IconPigMoney } from "@tabler/icons-react"
-import { Link, useLocation } from "react-router"
+import { IconPigMoney, IconLogout2 } from "@tabler/icons-react"
+import { Link, useLocation, useNavigate } from "react-router"
 
 const data = [
     {
@@ -58,12 +59,20 @@ const data = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const isItemActive = (url: string) => {
     if (url === "/dashboard") {
       return pathname === url
     }
 
     return pathname === url || pathname.startsWith(`${url}/`)
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("access")
+    localStorage.removeItem("refresh")
+
+    navigate("/", { replace: true })
   }
 
   return (
@@ -100,6 +109,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <button type="button" onClick={handleLogout}>
+                <IconLogout2 />
+                <span>Sign out</span>
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }

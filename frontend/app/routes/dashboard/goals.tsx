@@ -8,21 +8,13 @@ import { Button } from "~/components/ui/button"
 import { Badge } from "~/components/ui/badge"
 import {
   Field,
-  FieldError,
   FieldGroup,
   FieldLabel,
 } from "~/components/ui/field"
 import {
-  IconCalendar,
   IconTargetArrow,
 } from "@tabler/icons-react"
 import { Input } from "~/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover"
-import { Calendar } from "~/components/ui/calendar"
 import {
   Dialog,
   DialogClose,
@@ -52,7 +44,6 @@ type Goal = {
   id: number
   name: string
   target_amount: string
-  target_date: string
   status: "active" | "completed"
   current_amount?: string
 }
@@ -70,22 +61,19 @@ const formSchema = z.object({
       message: "Amount must be greater than 0.",
     }),
 
-  target_date: z.date(),
+})
+
+const transferSchema = z.object({
+  amount: z
+    .string()
+    .min(1, "Amount is required.")
+    .refine((value) => Number(value) > 0, {
+      message: "Amount must be greater than 0.",
+    }),
 })
 
 type FormValues = z.infer<typeof formSchema>
-
-function formatDateForDisplay(date: Date) {
-  return date.toLocaleDateString("en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  })
-}
-
-function formatDateForApi(date: Date) {
-  return date.toISOString().split("T")[0]
-}
+type TransferValues = z.infer<typeof transferSchema>
 
 function getGoalProgress(goal: Goal) {
   const currentAmount = Number(goal.current_amount ?? 0)
@@ -101,8 +89,11 @@ function getGoalProgress(goal: Goal) {
 export default function Goals() {
   const [goals, setGoals] = useState<Goal[]>([])
   const [createDialogOpen, setDialogOpen] = useState(false)
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false)
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [transferring, setTransferring] = useState(false)
   const [error, setError] = useState("")
 
   const createForm = useForm<FormValues>({
@@ -110,7 +101,13 @@ export default function Goals() {
     defaultValues: {
       name: "",
       target_amount: "",
-      target_date: new Date(),
+    },
+  })
+
+  const transferForm = useForm<TransferValues>({
+    resolver: zodResolver(transferSchema),
+    defaultValues: {
+      amount: "",
     },
   })
 
@@ -155,7 +152,6 @@ export default function Goals() {
         body: JSON.stringify({
           name: values.name,
           target_amount: values.target_amount,
-          target_date: formatDateForApi(values.target_date),
         }),
       })
 
@@ -176,6 +172,49 @@ export default function Goals() {
       toast.error("Could not create goal.")
     } finally {
       setCreating(false)
+    }
+  }
+
+  async function transferToGoal(values: TransferValues) {
+    if (!selectedGoal) {
+      return
+    }
+
+    try {
+      setTransferring(true)
+
+      const token = localStorage.getItem("access")
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/goals/${selectedGoal.id}/transfer/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount: values.amount,
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        console.error("Transfer goal error:", response.status, errorData)
+        throw new Error("Failed to transfer to goal")
+      }
+
+      await fetchGoals()
+      transferForm.reset()
+      setTransferDialogOpen(false)
+      setSelectedGoal(null)
+      toast.success("Savings transfer completed.")
+    } catch (error) {
+      console.error(error)
+      toast.error("Could not transfer savings.")
+    } finally {
+      setTransferring(false)
     }
   }
 
@@ -206,7 +245,7 @@ export default function Goals() {
         <DialogHeader>
           <DialogTitle>Add goal</DialogTitle>
           <DialogDescription>
-            Add a name, target amount and target date for this goal.
+            Add a name and target amount for this goal.
           </DialogDescription>
         </DialogHeader>
 
@@ -267,52 +306,6 @@ export default function Goals() {
               )}
             />
 
-            <Controller
-              name="target_date"
-              control={createForm.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Goal target date</FieldLabel>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        aria-invalid={fieldState.invalid}
-                        className="w-full justify-start !bg-white text-left font-normal !text-black hover:!bg-gray-100 hover:!text-black"
-                      >
-                        <IconCalendar className="mr-2 h-4 w-4" />
-
-                        {field.value
-                          ? formatDateForDisplay(field.value)
-                          : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-
-                    <PopoverContent
-                      align="start"
-                      className="w-auto !bg-white p-0 !text-black"
-                    >
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(date) => {
-                          if (date) {
-                            field.onChange(date)
-                          }
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
           </FieldGroup>
         </form>
 
@@ -331,9 +324,81 @@ export default function Goals() {
     </Dialog>
   )
 
+  const transferGoalDialog = (
+    <Dialog
+      open={transferDialogOpen}
+      onOpenChange={(open) => {
+        setTransferDialogOpen(open)
+
+        if (!open) {
+          transferForm.reset()
+          setSelectedGoal(null)
+        }
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add savings</DialogTitle>
+          <DialogDescription>
+            Transfer money from your main wallet to this goal.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form
+          id="transfer-goal-form"
+          className="space-y-4"
+          onSubmit={transferForm.handleSubmit(transferToGoal)}
+        >
+          <FieldGroup>
+            <Controller
+              name="amount"
+              control={transferForm.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="transfer-goal-amount">
+                    Amount (DH)
+                  </FieldLabel>
+
+                  <Input
+                    {...field}
+                    id="transfer-goal-amount"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="250.00"
+                    autoComplete="off"
+                  />
+
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        </form>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline" disabled={transferring}>
+              Cancel
+            </Button>
+          </DialogClose>
+
+          <Button type="submit" form="transfer-goal-form" disabled={transferring}>
+            {transferring ? <Spinner /> : "Transfer"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+
   return (
     <section className="w-full space-y-6">
       <div className="flex justify-start">{createGoalDialog}</div>
+
+      {transferGoalDialog}
 
       {loading ? (
         <div className="flex justify-center py-10">
@@ -412,9 +477,17 @@ export default function Goals() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-muted-foreground">
-                    Target date: {goal.target_date}
-                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedGoal(goal)
+                      setTransferDialogOpen(true)
+                    }}
+                  >
+                    Add savings
+                  </Button>
                 </CardContent>
               </Card>
             )
