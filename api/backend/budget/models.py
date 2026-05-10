@@ -10,10 +10,10 @@ class Budget(models.Model):
         related_name="budgets",
     )
 
-    goal = models.ForeignKey(
+    goal = models.OneToOneField(
         Goal,
         on_delete=models.CASCADE,
-        related_name="budgets",
+        related_name="budget",
     )
 
     suggested_amount = models.DecimalField(
@@ -27,4 +27,4 @@ class Budget(models.Model):
     )
 
     def __str__(self):
-        return f"Budget suggestion for {self.goal.name}"
+        return f"Budget plan for {self.goal.name}"

@@ -16,7 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from finance.views import WalletListView, TransactionListCreateView, TransactionDetailView, GoalView, TransferToGoalView
+from finance.views import WalletListView, TransactionListCreateView, TransactionDetailView, GoalView, GoalDetailView, TransferToGoalView
+from budget.views import GoalSuggestionView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,5 +26,7 @@ urlpatterns = [
     path("api/transactions/", TransactionListCreateView.as_view(), name="transaction-list-create"),
     path("api/transactions/<int:pk>/", TransactionDetailView.as_view(), name="transaction-detail"),
     path("api/goals/", GoalView.as_view(), name="goals"),
+    path("api/goals/<int:pk>/", GoalDetailView.as_view(), name="goal-detail"),
     path("api/goals/<int:goal_id>/transfer/", TransferToGoalView.as_view(), name="goal-transfer"),
+    path("api/goals/suggestions/", GoalSuggestionView.as_view(), name="goal-suggestions"),
 ]

@@ -97,5 +97,10 @@ class TransferService:
         Wallet.objects.filter(id=goal_wallet.id).update(
             balance=F("balance") + amount
         )
+        new_balance = goal_wallet.balance + amount
+
+        if goal.target_amount <= new_balance:
+            goal.status = Goal.Status.COMPLETED
+            goal.save(update_fields=["status"])
 
         return transfer_out, transfer_in, group_id

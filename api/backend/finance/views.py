@@ -220,6 +220,32 @@ class GoalView(generics.ListCreateAPIView):
         )
 
 
+class GoalDetailView(generics.DestroyAPIView):
+    serializer_class = GoalSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Goal.objects.filter(user=self.request.user)
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        wallet = getattr(instance, "wallet", None)
+
+        if wallet is not None:
+            transfer_group_ids = list(
+                Transaction.objects
+                .filter(wallet=wallet, transfer_group__isnull=False)
+                .values_list("transfer_group", flat=True)
+            )
+
+            if transfer_group_ids:
+                Transaction.objects.filter(transfer_group__in=transfer_group_ids).delete()
+
+            Transaction.objects.filter(wallet=wallet).delete()
+
+        instance.delete()
+
+
 class TransferToGoalView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -236,6 +262,8 @@ class TransferToGoalView(APIView):
             description=request.data.get("description", ""),
             transaction_date=request.data.get("transaction_date"),
         )
+
+        
 
         return Response(
             {

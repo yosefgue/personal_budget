@@ -13,6 +13,7 @@ import {
 } from "~/components/ui/field"
 import {
   IconTargetArrow,
+  IconTrash,
 } from "@tabler/icons-react"
 import { Input } from "~/components/ui/input"
 import {
@@ -46,6 +47,12 @@ type Goal = {
   target_amount: string
   status: "active" | "completed"
   current_amount?: string
+}
+
+type GoalSuggestion = {
+  goal_id: number
+  suggested_amount: string | number
+  estimated_months: number | null
 }
 
 const formSchema = z.object({
@@ -86,14 +93,33 @@ function getGoalProgress(goal: Goal) {
   return Math.min((currentAmount / targetAmount) * 100, 100)
 }
 
+function formatMonthYear(date: Date) {
+  return date.toLocaleDateString(undefined, { month: "short", year: "numeric" })
+}
+
+function getTargetDate(estimatedMonths: number | null) {
+  if (!estimatedMonths || estimatedMonths <= 0) {
+    return null
+  }
+
+  const date = new Date()
+  date.setMonth(date.getMonth() + estimatedMonths)
+  return date
+}
+
 export default function Goals() {
   const [goals, setGoals] = useState<Goal[]>([])
+  const [suggestions, setSuggestions] = useState<Record<number, GoalSuggestion>>({})
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [createDialogOpen, setDialogOpen] = useState(false)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null)
+  const [goalToDelete, setGoalToDelete] = useState<Goal | null>(null)
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [transferring, setTransferring] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState("")
 
   const createForm = useForm<FormValues>({
@@ -215,6 +241,90 @@ export default function Goals() {
       toast.error("Could not transfer savings.")
     } finally {
       setTransferring(false)
+    }
+  }
+
+  async function deleteGoal() {
+    if (!goalToDelete) {
+      return
+    }
+
+    try {
+      setDeleting(true)
+
+      const token = localStorage.getItem("access")
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/goals/${goalToDelete.id}/`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        console.error("Delete goal error:", response.status, errorData)
+        throw new Error("Failed to delete goal")
+      }
+
+      setGoals((prev) => prev.filter((goal) => goal.id !== goalToDelete.id))
+      setDeleteDialogOpen(false)
+      setGoalToDelete(null)
+      toast.success("Goal deleted successfully.")
+    } catch (error) {
+      console.error(error)
+      toast.error("Could not delete goal.")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  async function fetchSuggestions() {
+    try {
+      setLoadingSuggestions(true)
+
+      const token = localStorage.getItem("access")
+
+      const response = await fetch("http://127.0.0.1:8000/api/goals/suggestions/", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        console.error("Fetch suggestions error:", response.status, errorData)
+        throw new Error("Failed to fetch suggestions")
+      }
+
+      const data = await response.json()
+
+      if (!Array.isArray(data)) {
+        toast.info("Not enough income data to generate suggestions.")
+        setSuggestions({})
+        return
+      }
+
+      const next: Record<number, GoalSuggestion> = {}
+
+      for (const item of data) {
+        if (item?.goal_id) {
+          next[item.goal_id] = item
+        }
+      }
+
+      setSuggestions(next)
+    } catch (error) {
+      console.error(error)
+      toast.error("Could not generate suggestions.")
+    } finally {
+      setLoadingSuggestions(false)
     }
   }
 
@@ -394,11 +504,57 @@ export default function Goals() {
     </Dialog>
   )
 
+  const deleteGoalDialog = (
+    <Dialog
+      open={deleteDialogOpen}
+      onOpenChange={(open) => {
+        setDeleteDialogOpen(open)
+
+        if (!open) {
+          setGoalToDelete(null)
+        }
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete goal?</DialogTitle>
+          <DialogDescription>
+            This will delete the goal and discard any funds in its wallet.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline" disabled={deleting}>
+              Cancel
+            </Button>
+          </DialogClose>
+
+          <Button type="button" variant="destructive" disabled={deleting} onClick={deleteGoal}>
+            {deleting ? <Spinner /> : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+
   return (
     <section className="w-full space-y-6">
-      <div className="flex justify-start">{createGoalDialog}</div>
+      <div className="flex flex-wrap items-center gap-3">
+        {createGoalDialog}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={fetchSuggestions}
+          disabled={loadingSuggestions}
+        >
+          {loadingSuggestions ? <Spinner /> : "Generate suggestions"}
+        </Button>
+      </div>
 
       {transferGoalDialog}
+      {deleteGoalDialog}
 
       {loading ? (
         <div className="flex justify-center py-10">
@@ -427,16 +583,38 @@ export default function Goals() {
           {goals.map((goal) => {
             const progress = getGoalProgress(goal)
             const currentAmount = Number(goal.current_amount ?? 0)
+            const suggestion = suggestions[goal.id]
+            const targetDate = getTargetDate(suggestion?.estimated_months ?? null)
 
             return (
               <Card key={goal.id} className="rounded-2xl shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between gap-3">
                     <span className="truncate">{goal.name}</span>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        className={
+                          goal.status === "completed"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : undefined
+                        }
+                      >
+                        {goal.status}
+                      </Badge>
 
-                    <Badge>
-                      {goal.status}
-                    </Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setGoalToDelete(goal)
+                          setDeleteDialogOpen(true)
+                        }}
+                        aria-label={`Delete ${goal.name}`}
+                      >
+                        <IconTrash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </CardTitle>
                 </CardHeader>
 
@@ -488,6 +666,32 @@ export default function Goals() {
                   >
                     Add savings
                   </Button>
+
+                  <div className="rounded-xl border border-dashed p-3 text-sm">
+                    <span className="text-muted-foreground">Suggestion</span>
+
+                    {suggestion?.suggested_amount ? (
+                      <div className="mt-2 space-y-1">
+                        <p className="font-medium">
+                          {Number(suggestion.suggested_amount).toFixed(2)} DH / month
+                          {suggestion.estimated_months ? ` for ${suggestion.estimated_months} months` : ""}
+                        </p>
+                        {targetDate ? (
+                          <p className="text-xs text-muted-foreground">
+                            Target date: {formatMonthYear(targetDate)}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            Target date unavailable
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        No suggestion generated yet.
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )
