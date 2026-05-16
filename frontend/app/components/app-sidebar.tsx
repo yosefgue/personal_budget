@@ -48,10 +48,6 @@ const data = [
           title: "Goals",
           url: "/dashboard/goals",
         },
-        {
-          title: "Budgets",
-          url: "/dashboard/budgets",
-        },
       ],
     }
   ]

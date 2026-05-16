@@ -11,7 +11,8 @@ from finance.models import Transaction, Wallet, Goal
 
 
 def round_to_nearest_100(amount):
-    return int(round(amount / 100) * 100)
+    rounded = int(round(amount / 100) * 100)
+    return max(100, rounded)
 
 
 class GoalSuggestionService:
@@ -64,16 +65,12 @@ class GoalSuggestionService:
 
             months_needed = remaining_amount / global_saving_amount
 
-            if months_needed <= 1:
+            if months_needed <= 3:
                 weight = 1
-            elif months_needed <= 3:
-                weight = 2
-            elif months_needed <= 6:
-                weight = 3
             elif months_needed <= 12:
-                weight = 4
+                weight = 2
             else:
-                weight = 5
+                weight = 3
 
             goals_data.append({
                 "goal": goal,
@@ -106,10 +103,12 @@ class GoalSuggestionService:
 
             suggested_amount = round_to_nearest_100(suggested_amount)
 
-            if suggested_amount <= 0:
-                estimated_months = None
-            else:
-                estimated_months = ceil(remaining_amount / suggested_amount)
+            suggested_amount = min(
+                suggested_amount,
+                remaining_amount,
+            )
+
+            estimated_months = ceil(remaining_amount / suggested_amount)
 
             suggestions.append({
                 "goal_id": goal.id,
@@ -118,3 +117,4 @@ class GoalSuggestionService:
             })
 
         return suggestions
+    
