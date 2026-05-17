@@ -2,6 +2,9 @@ from datetime import timedelta
 from decimal import Decimal
 from math import ceil
 
+from google import genai
+from django.conf import settings
+
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
@@ -242,3 +245,39 @@ def get_dashboard_insights(user):
         })
 
     return insights[:4]
+
+
+class FinanceAIService:
+    def __init__(self):
+        if not settings.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY is not configured")
+
+        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+    def generate_advice(self, user_message: str, financial_context: str) -> str:
+        prompt = f"""
+    You are a personal finance assistant inside a budgeting web application.
+
+    Rules:
+    - Answer the user's question directly.
+    - Use the provided data whenever relevant and reference it briefly.
+    - You may give general best-practice tips when the question is broad.
+    - Do not invent specific transactions, balances, income, categories, or totals.
+    - Do not modify wallet balances.
+    - Do not create transactions.
+    - If the data is incomplete, say the advice is approximate.
+    - Keep the answer short and clear (3-6 bullet points max).
+
+    User financial data (JSON):
+    {financial_context}
+
+    User question:
+    {user_message}
+    """
+
+        response = self.client.models.generate_content(
+            model=settings.GEMINI_MODEL,
+            contents=prompt,
+        )
+
+        return response.text

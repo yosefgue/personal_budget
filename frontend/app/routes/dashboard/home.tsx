@@ -360,6 +360,7 @@ export default function DashboardHome() {
 		},
 	}
 
+
 	return (
 		<div className="space-y-6">
 			<section className="space-y-3">
@@ -660,6 +661,7 @@ export default function DashboardHome() {
 					</Card>
 				</div>
 			</section>
+
 		</div>
 	)
 }

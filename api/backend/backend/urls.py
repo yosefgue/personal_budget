@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from finance.views import WalletListView, TransactionListCreateView, TransactionDetailView, GoalView, GoalDetailView, TransferToGoalView
-from budget.views import GoalSuggestionView, DashboardInsightsView
+from budget.views import GoalSuggestionView, DashboardInsightsView, AIChatView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,4 +30,5 @@ urlpatterns = [
     path("api/goals/<int:goal_id>/transfer/", TransferToGoalView.as_view(), name="goal-transfer"),
     path("api/goals/suggestions/", GoalSuggestionView.as_view(), name="goal-suggestions"),
     path("api/dashboard/insights/", DashboardInsightsView.as_view(), name="dashboard-insights"),
+    path("api/ai/chat/", AIChatView.as_view(), name="ai-chat")
 ]
