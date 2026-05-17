@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.db import transaction
 
-from finance.services import WalletService
+from finance.services import create_main_wallet_user
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
         )
 
-        WalletService.create_main_wallet_user(user)
+        create_main_wallet_user(user)
         return user
 
 

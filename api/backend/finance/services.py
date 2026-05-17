@@ -9,98 +9,92 @@ from rest_framework.exceptions import ValidationError
 from .models import Goal, Wallet, Transaction
 
 
-class WalletService:
-    @staticmethod
-    def create_main_wallet_user(user):
-        wallet, created = Wallet.objects.get_or_create(
-            user=user,
-            type=Wallet.WalletType.MAIN,
-            defaults={
-                "name": "Main wallet",
-                "balance": 0,
-                }
-        )
-        return wallet
+def create_main_wallet_user(user):
+    wallet, created = Wallet.objects.get_or_create(
+        user=user,
+        type=Wallet.WalletType.MAIN,
+        defaults={
+            "name": "Main wallet",
+            "balance": 0,
+        }
+    )
+    return wallet
 
 
-class WalletGoalService:
-    @staticmethod
-    def create_wallet_goal(user, goal):
-        wallet, created = Wallet.objects.get_or_create(
-            user=user,
-            type=Wallet.WalletType.GOAL,
-            goal=goal,
-            defaults={
-                "name": f"{goal.name} wallet",
-                "balance": 0,
-            },
-        )
-        return wallet
-    
+def create_wallet_goal(user, goal):
+    wallet, created = Wallet.objects.get_or_create(
+        user=user,
+        type=Wallet.WalletType.GOAL,
+        goal=goal,
+        defaults={
+            "name": f"{goal.name} wallet",
+            "balance": 0,
+        },
+    )
+    return wallet
 
-class TransferService:
-    @staticmethod
-    @transaction.atomic
-    def transfer_to_goal(user, goal_id, amount, description="", transaction_date=None):
-        amount = Decimal(str(amount))
 
-        if amount <= 0:
-            raise ValidationError({"amount": "Amount must be greater than 0."})
+@transaction.atomic
+def transfer_to_goal(user, goal_id, amount, description="", transaction_date=None):
+    amount = Decimal(str(amount))
 
-        transaction_date = transaction_date or timezone.localdate()
+    if amount <= 0:
+        raise ValidationError({"amount": "Amount must be greater than 0."})
 
-        main_wallet = Wallet.objects.select_for_update().get(
-            user=user,
-            type=Wallet.WalletType.MAIN,
-        )
+    transaction_date = transaction_date or timezone.localdate()
 
-        goal = Goal.objects.select_related("wallet").get(
-            id=goal_id,
-            user=user,
-        )
+    main_wallet = Wallet.objects.select_for_update().get(
+        user=user,
+        type=Wallet.WalletType.MAIN,
+    )
 
-        goal_wallet = goal.wallet
+    goal = Goal.objects.select_related("wallet").get(
+        id=goal_id,
+        user=user,
+    )
 
-        if main_wallet.balance < amount:
-            raise ValidationError({"amount": "Insufficient balance."})
+    goal_wallet = goal.wallet
 
-        group_id = uuid.uuid4()
+    if main_wallet.balance < amount:
+        raise ValidationError({"amount": "Insufficient balance."})
 
-        transfer_out = Transaction.objects.create(
-            user=user,
-            wallet=main_wallet,
-            category=None,
-            transfer_group=group_id,
-            title=f"Transfer to {goal.name}",
-            amount=amount,
-            type=Transaction.Type.TRANSFER_OUT,
-            description=description,
-            transaction_date=transaction_date,
-        )
+    group_id = uuid.uuid4()
 
-        transfer_in = Transaction.objects.create(
-            user=user,
-            wallet=goal_wallet,
-            category=None,
-            transfer_group=group_id,
-            title="Transfer from main wallet",
-            amount=amount,
-            type=Transaction.Type.TRANSFER_IN,
-            description=description,
-            transaction_date=transaction_date,
-        )
+    transfer_out = Transaction.objects.create(
+        user=user,
+        wallet=main_wallet,
+        category=None,
+        transfer_group=group_id,
+        title=f"Transfer to {goal.name}",
+        amount=amount,
+        type=Transaction.Type.TRANSFER_OUT,
+        description=description,
+        transaction_date=transaction_date,
+    )
 
-        Wallet.objects.filter(id=main_wallet.id).update(
-            balance=F("balance") - amount
-        )
+    transfer_in = Transaction.objects.create(
+        user=user,
+        wallet=goal_wallet,
+        category=None,
+        transfer_group=group_id,
+        title="Transfer from main wallet",
+        amount=amount,
+        type=Transaction.Type.TRANSFER_IN,
+        description=description,
+        transaction_date=transaction_date,
+    )
 
-        Wallet.objects.filter(id=goal_wallet.id).update(
-            balance=F("balance") + amount
-        )
-        new_balance = goal_wallet.balance + amount
+    Wallet.objects.filter(id=main_wallet.id).update(
+        balance=F("balance") - amount
+    )
 
-        if goal.target_amount <= new_balance:
-            goal.status = Goal.Status.COMPLETED
-            goal.save(update_fields=["status"])
+    Wallet.objects.filter(id=goal_wallet.id).update(
+        balance=F("balance") + amount
+    )
+    new_balance = goal_wallet.balance + amount
 
-        return transfer_out, transfer_in, group_id
+    if goal.target_amount <= new_balance:
+        goal.status = Goal.Status.COMPLETED
+        goal.save(update_fields=["status"])
+
+    return transfer_out, transfer_in, group_id

@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from .models import Goal, Wallet, Transaction
 from .serializers import WalletSerializer, TransactionSerializer, GoalSerializer
-from .services import WalletGoalService, TransferService
+from .services import create_wallet_goal, transfer_to_goal
 
 
 def get_transaction_effect(transaction_type, amount):
@@ -214,7 +214,7 @@ class GoalView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         goal = serializer.save(user=self.request.user)
 
-        WalletGoalService.create_wallet_goal(
+        create_wallet_goal(
             user=self.request.user,
             goal=goal,
         )
@@ -255,7 +255,7 @@ class TransferToGoalView(APIView):
         if amount is None:
             raise ValidationError({"amount": "Amount is required."})
 
-        transfer_out, transfer_in, group_id = TransferService.transfer_to_goal(
+        transfer_out, transfer_in, group_id = transfer_to_goal(
             user=request.user,
             goal_id=goal_id,
             amount=amount,

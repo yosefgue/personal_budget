@@ -26,6 +26,9 @@ import {
 import {
 	IconArrowDownRight,
 	IconArrowUpRight,
+	IconCircleCheck,
+	IconInfoCircle,
+	IconAlertTriangle,
 	IconPigMoney,
 	IconReceipt,
 	IconWallet,
@@ -36,6 +39,12 @@ type Wallet = {
 	name: string
 	type: "main" | "goal"
 	balance: string
+}
+
+type Insight = {
+	type: "info" | "warning" | "success"
+	title: string
+	message: string
 }
 
 const currencyFormatter = new Intl.NumberFormat("fr-MA", {
@@ -136,6 +145,7 @@ function SummaryCard({
 export default function DashboardHome() {
 	const [wallets, setWallets] = useState<Wallet[]>([])
 	const [transactions, setTransactions] = useState<Transaction[]>([])
+	const [insights, setInsights] = useState<Insight[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState("")
 
@@ -151,9 +161,10 @@ export default function DashboardHome() {
 					Authorization: `Bearer ${token}`,
 				}
 
-				const [walletsResponse, transactionsResponse] = await Promise.all([
+				const [walletsResponse, transactionsResponse, insightsResponse] = await Promise.all([
 					fetch("http://127.0.0.1:8000/api/wallets/", { headers }),
 					fetch("http://127.0.0.1:8000/api/transactions/", { headers }),
+					fetch("http://127.0.0.1:8000/api/dashboard/insights/", { headers }),
 				])
 
 				if (!walletsResponse.ok) {
@@ -164,11 +175,17 @@ export default function DashboardHome() {
 					throw new Error("Failed to fetch transactions")
 				}
 
+				if (!insightsResponse.ok) {
+					throw new Error("Failed to fetch insights")
+				}
+
 				const walletsData = await walletsResponse.json()
 				const transactionsData = await transactionsResponse.json()
+				const insightsData = await insightsResponse.json()
 
 				setWallets(walletsData)
 				setTransactions(transactionsData)
+				setInsights(insightsData)
 			} catch (loadError) {
 				console.error(loadError)
 				setError("Could not load summary data.")
@@ -326,6 +343,21 @@ export default function DashboardHome() {
 
 	if (error) {
 		return <p className="text-sm text-destructive">{error}</p>
+	}
+
+	const insightMeta = {
+		warning: {
+			icon: <IconAlertTriangle className="h-4 w-4 text-amber-600" />,
+			badgeClassName: "bg-amber-500/15",
+		},
+		info: {
+			icon: <IconInfoCircle className="h-4 w-4 text-blue-600" />,
+			badgeClassName: "bg-blue-500/15",
+		},
+		success: {
+			icon: <IconCircleCheck className="h-4 w-4 text-emerald-600" />,
+			badgeClassName: "bg-emerald-500/15",
+		},
 	}
 
 	return (
@@ -509,7 +541,7 @@ export default function DashboardHome() {
 			</section>
 
 			<section className="space-y-3">
-				<div className="w-full lg:w-1/2">
+				<div className="grid gap-4 lg:grid-cols-2">
 					<Card>
 						<CardHeader className="pb-0">
 							<CardTitle className="text-base font-semibold">
@@ -580,6 +612,49 @@ export default function DashboardHome() {
 										</ul>
 									</div>
 								</div>
+							)}
+						</CardContent>
+					</Card>
+					<Card>
+						<CardHeader className="pb-0">
+							<CardTitle className="text-base font-semibold">
+								Insights
+							</CardTitle>
+							<CardDescription>
+								Quick signals from your recent activity
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="flex h-64 flex-col pt-4">
+							{insights.length === 0 ? (
+								<p className="text-sm text-muted-foreground">
+									No insights available yet.
+								</p>
+							) : (
+								<ul className="space-y-3 overflow-auto pr-2">
+									{insights.map((insight, index) => {
+										const meta =
+											insightMeta[insight.type] ?? insightMeta.info
+										return (
+											<li key={`${insight.title}-${index}`}>
+												<div className="flex items-start gap-3">
+													<div
+														className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full ${meta.badgeClassName}`}
+													>
+														{meta.icon}
+													</div>
+													<div>
+														<p className="text-sm font-medium">
+															{insight.title}
+														</p>
+														<p className="text-xs text-muted-foreground">
+															{insight.message}
+														</p>
+													</div>
+												</div>
+											</li>
+										)
+									})}
+								</ul>
 							)}
 						</CardContent>
 					</Card>
