@@ -41,7 +41,7 @@ export function SignupForm({
     setLoading(true);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Les mots de passe ne correspondent pas.");
       return;
     }
 
@@ -54,7 +54,7 @@ export function SignupForm({
     try {
       const user = await registerUser(values);
       console.log("registered", user);
-      setSuccess("Account created successfully.");
+      setSuccess("Compte cree avec succes.");
 
       setUsername("");
       setEmail("");
@@ -71,7 +71,7 @@ export function SignupForm({
       } else if (err?.password?.[0]) {
         setError(err.password[0]);
       } else {
-        setError("Registration failed.");
+        setError("Echec de l'inscription.");
       }
       setLoading(false);
     }
@@ -85,13 +85,13 @@ export function SignupForm({
             <div className="flex size-8 items-center justify-center rounded-md">
               <IconPigMoney className="size-8" />
             </div>
-            <h1 className="text-xl font-bold">Register</h1>
+            <h1 className="text-xl font-bold">Inscription</h1>
             <FieldDescription>
-              Already have an account? <a href="/">Login</a>
+              Vous avez deja un compte ? <a href="/">Se connecter</a>
             </FieldDescription>
           </div>
           <Field>
-            <FieldLabel htmlFor="username">Username</FieldLabel>
+            <FieldLabel htmlFor="username">Nom d&apos;utilisateur</FieldLabel>
             <Input
               id="username"
               type="text"
@@ -111,7 +111,7 @@ export function SignupForm({
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
             <Input
               id="password"
               type="password"
@@ -119,12 +119,12 @@ export function SignupForm({
               onChange={(e) => setPassword(e.target.value)}
             />
             <FieldDescription>
-              Must be at least 8 characters long.
+              Au moins 8 caracteres.
             </FieldDescription>
           </Field>
           <Field>
             <FieldLabel htmlFor="confirm-password">
-              Confirm Password
+              Confirmer le mot de passe
             </FieldLabel>
             <Input
               id="confirm-password"
@@ -132,12 +132,12 @@ export function SignupForm({
               required
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            <FieldDescription>Please confirm your password.</FieldDescription>
+            <FieldDescription>Veuillez confirmer votre mot de passe.</FieldDescription>
           </Field>
           <FieldGroup>
             <Field>
               <Button type="submit" disabled={loading}>
-                {loading ? <Spinner /> : "Create Account"}
+                {loading ? <Spinner /> : "Creer un compte"}
               </Button>
             </Field>
           </FieldGroup>

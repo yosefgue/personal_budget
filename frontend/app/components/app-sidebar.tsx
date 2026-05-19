@@ -18,20 +18,20 @@ import { Link, useLocation, useNavigate } from "react-router"
 
 const data = [
     {
-      title: "Overview",
+      title: "Apercu",
       items: [
         {
-          title: "Dashboard",
+          title: "Tableau de bord",
           url: "/dashboard",
         },
       ],
     },
     {
-      title: "Money",
+      title: "Finances",
       url: "#",
       items: [
         {
-          title: "Wallets",
+          title: "Portefeuilles",
           url: "/dashboard/wallets",
         },
         {
@@ -41,11 +41,11 @@ const data = [
       ],
     },
     {
-      title: "Planning",
+      title: "Planification",
       url: "#",
       items: [
         {
-          title: "Goals",
+          title: "Objectifs",
           url: "/dashboard/goals",
         },
       ],
@@ -81,7 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <IconPigMoney className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">Budget App</span>
+                  <span className="font-medium">Budget</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -111,7 +111,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton asChild>
               <button type="button" onClick={handleLogout}>
                 <IconLogout2 />
-                <span>Sign out</span>
+                <span>Deconnexion</span>
               </button>
             </SidebarMenuButton>
           </SidebarMenuItem>

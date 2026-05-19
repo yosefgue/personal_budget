@@ -50,7 +50,7 @@ export function TransactionTable({
     () => [
       {
         accessorKey: "title",
-        header: "Title",
+        header: "Titre",
       },
       {
         accessorKey: "type",
@@ -59,8 +59,8 @@ export function TransactionTable({
       },
       {
         accessorKey: "category_name",
-        header: "Category",
-        cell: ({ row }) => row.original.category_name ?? "Transfer",
+        header: "Categorie",
+        cell: ({ row }) => row.original.category_name ?? "Virement",
       },
       {
         accessorKey: "transaction_date",
@@ -72,7 +72,7 @@ export function TransactionTable({
       },
       {
         accessorKey: "amount",
-        header: () => <div className="text-right">Amount</div>,
+        header: () => <div className="text-right">Montant</div>,
         cell: ({ row }) => {
           const amount = Number(row.getValue("amount"))
           const presentation = getAmountPresentation(row.original)
@@ -112,10 +112,10 @@ export function TransactionTable({
             <IconReceipt className="h-6 w-6" />
           </EmptyMedia>
 
-          <EmptyTitle>No transactions yet</EmptyTitle>
+          <EmptyTitle>Aucune transaction pour le moment</EmptyTitle>
 
           <EmptyDescription>
-            Once you add income or expenses, they will appear here.
+            Une fois ajoutees, les transactions apparaitront ici.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

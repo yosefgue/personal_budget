@@ -65,9 +65,9 @@ export function TransactionEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit transaction</DialogTitle>
+          <DialogTitle>Modifier la transaction</DialogTitle>
           <DialogDescription>
-            Modify this transaction or delete it permanently.
+            Modifiez cette transaction ou supprimez-la definitivement.
           </DialogDescription>
         </DialogHeader>
 
@@ -84,14 +84,14 @@ export function TransactionEditDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="edit-transaction-title">
-                      Title
+                      Titre
                     </FieldLabel>
 
                     <Input
                       {...field}
                       id="edit-transaction-title"
                       aria-invalid={fieldState.invalid}
-                      placeholder="Groceries"
+                      placeholder="Courses"
                       autoComplete="off"
                     />
 
@@ -108,7 +108,7 @@ export function TransactionEditDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="edit-transaction-amount">
-                      Amount
+                      Montant
                     </FieldLabel>
 
                     <Input
@@ -146,12 +146,12 @@ export function TransactionEditDialog({
                           }}
                         >
                           <SelectTrigger aria-invalid={fieldState.invalid}>
-                            <SelectValue placeholder="Select type" />
+                            <SelectValue placeholder="Choisir un type" />
                           </SelectTrigger>
 
                           <SelectContent>
-                            <SelectItem value="income">Income</SelectItem>
-                            <SelectItem value="expense">Expense</SelectItem>
+                            <SelectItem value="income">Revenu</SelectItem>
+                            <SelectItem value="expense">Depense</SelectItem>
                           </SelectContent>
                         </Select>
                       </Field>
@@ -163,14 +163,14 @@ export function TransactionEditDialog({
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel>Category</FieldLabel>
+                        <FieldLabel>Categorie</FieldLabel>
 
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger aria-invalid={fieldState.invalid}>
-                            <SelectValue placeholder="Select category" />
+                            <SelectValue placeholder="Choisir une categorie" />
                           </SelectTrigger>
 
                           <SelectContent>
@@ -199,9 +199,9 @@ export function TransactionEditDialog({
 
             {isTransfer ? (
               <div className="rounded-md border border-dashed bg-muted/30 p-4">
-                <p className="text-sm font-medium">Transfer transaction</p>
+                <p className="text-sm font-medium">Transaction de virement</p>
                 <p className="text-xs text-muted-foreground">
-                  Category and type are locked for transfers.
+                  Le type et la categorie sont verrouilles pour les virements.
                 </p>
               </div>
             ) : (
@@ -211,7 +211,7 @@ export function TransactionEditDialog({
                 render={({ field }) => (
                   <Field orientation="horizontal">
                     <FieldLabel htmlFor="edit-transaction-recurring">
-                      Recurring monthly
+                      Mensuel recurrent
                     </FieldLabel>
 
                     <Switch
@@ -237,7 +237,7 @@ export function TransactionEditDialog({
                     {...field}
                     id="edit-transaction-description"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Optional note about this transaction"
+                    placeholder="Note optionnelle sur cette transaction"
                     className="min-h-[88px]"
                   />
 
@@ -253,7 +253,7 @@ export function TransactionEditDialog({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Transaction date</FieldLabel>
+                  <FieldLabel>Date de transaction</FieldLabel>
 
                   <Popover>
                     <PopoverTrigger asChild>
@@ -267,7 +267,7 @@ export function TransactionEditDialog({
 
                         {field.value
                           ? formatDateForDisplay(field.value)
-                          : "Pick a date"}
+                          : "Choisir une date"}
                       </Button>
                     </PopoverTrigger>
 
@@ -300,18 +300,18 @@ export function TransactionEditDialog({
         <DialogFooter className="gap-2 sm:justify-between">
           <Button type="button" variant="destructive" onClick={onDelete}>
             <IconTrash className="mr-2 h-4 w-4" />
-            Delete
+            Supprimer
           </Button>
 
           <div className="flex gap-2">
             <DialogClose asChild>
               <Button type="button" variant="outline">
-                Cancel
+                Annuler
               </Button>
             </DialogClose>
 
             <Button type="submit" form="edit-transaction-form">
-              Save changes
+              Enregistrer
             </Button>
           </div>
         </DialogFooter>

@@ -17,27 +17,27 @@ import {
 } from "~/components/transaction-types"
 
 const incomeCategories = [
-  "Salary",
+  "Salaire",
   "Freelance",
-  "Business",
-  "Gift",
-  "Investment",
-  "Other",
+  "Entreprise",
+  "Cadeau",
+  "Investissement",
+  "Autre",
 ]
 
 const expenseCategories = [
-  "Food",
+  "Alimentation",
   "Transport",
-  "Rent",
-  "Bills",
-  "Shopping",
-  "Health",
+  "Loyer",
+  "Factures",
+  "Achats",
+  "Sante",
   "Education",
-  "Entertainment",
-  "Travel",
-  "Subscriptions",
-  "Savings",
-  "Other",
+  "Loisirs",
+  "Voyage",
+  "Abonnements",
+  "Epargne",
+  "Autre",
 ]
 
 const categories: Category[] = [
@@ -62,7 +62,7 @@ function formatDateForDjango(date: Date) {
 }
 
 function formatDateForDisplay(date: Date) {
-  return date.toLocaleDateString("en-GB", {
+  return date.toLocaleDateString("fr-FR", {
     year: "numeric",
     month: "short",
     day: "2-digit",
@@ -90,15 +90,15 @@ function isTransferType(
 function getTransactionTypeLabel(transactionType: Transaction["type"]) {
   switch (transactionType) {
     case "income":
-      return "Income"
+      return "Revenu"
     case "expense":
-      return "Expense"
+      return "Depense"
     case "transfer_in":
-      return "Transfer in"
+      return "Virement entrant"
     case "transfer_out":
-      return "Transfer out"
+      return "Virement sortant"
     default:
-      return "Unknown"
+      return "Inconnu"
   }
 }
 
@@ -189,7 +189,7 @@ export default function Transactions() {
     })
 
     if (!response.ok) {
-      throw new Error("Failed to fetch transactions")
+      throw new Error("Echec du chargement des transactions")
     }
 
     const data: Transaction[] = await response.json()
@@ -202,7 +202,7 @@ export default function Transactions() {
         await fetchTransactions()
       } catch (error) {
         console.error(error)
-        setError("Could not load transactions.")
+        setError("Impossible de charger les transactions.")
       } finally {
         setLoading(false)
       }
@@ -241,12 +241,12 @@ export default function Transactions() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         console.error(errorData)
-        throw new Error("Failed to create transaction")
+        throw new Error("Echec de la creation de la transaction")
       }
 
       await fetchTransactions()
 
-      toast.success("Transaction created successfully.")
+      toast.success("Transaction creee avec succes.")
 
       createForm.reset({
         title: "",
@@ -261,7 +261,7 @@ export default function Transactions() {
       setCreateDialogOpen(false)
     } catch (error) {
       console.error(error)
-      toast.error("Could not create transaction.")
+      toast.error("Impossible de creer la transaction.")
     }
   }
 
@@ -299,18 +299,18 @@ export default function Transactions() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         console.error(errorData)
-        throw new Error("Failed to update transaction")
+        throw new Error("Echec de la mise a jour de la transaction")
       }
 
       await fetchTransactions()
 
-      toast.success("Transaction updated successfully.")
+      toast.success("Transaction mise a jour avec succes.")
 
       setEditDialogOpen(false)
       setSelectedTransaction(null)
     } catch (error) {
       console.error(error)
-      toast.error("Could not update transaction.")
+      toast.error("Impossible de mettre a jour la transaction.")
     }
   }
 
@@ -334,18 +334,18 @@ export default function Transactions() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         console.error(errorData)
-        throw new Error("Failed to delete transaction")
+        throw new Error("Echec de la suppression de la transaction")
       }
 
       await fetchTransactions()
 
-      toast.success("Transaction deleted successfully.")
+      toast.success("Transaction supprimee avec succes.")
 
       setEditDialogOpen(false)
       setSelectedTransaction(null)
     } catch (error) {
       console.error(error)
-      toast.error("Could not delete transaction.")
+      toast.error("Impossible de supprimer la transaction.")
     }
   }
 

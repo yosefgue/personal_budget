@@ -39,7 +39,7 @@ export function LoginForm({
           console.log("logged in", tokens);
           localStorage.setItem("access", tokens.access)
           localStorage.setItem("refresh", tokens.refresh)
-          setSuccess("Logged in successfully.");
+          setSuccess("Connexion reussie.");
           setUsername("");
           setPassword("");
           navigate("/dashboard");
@@ -51,7 +51,7 @@ export function LoginForm({
           } else if (err?.password?.[0]) {
             setError(err.password[0]);
           } else {
-            setError("Login failed.");
+            setError("Echec de la connexion.");
           }
           setLoading(false);
         }
@@ -65,24 +65,24 @@ export function LoginForm({
             <div className="flex size-8 items-center justify-center rounded-md">
               <IconPigMoney className="size-8" />
             </div>
-            <h1 className="text-xl font-bold">Welcome</h1>
+            <h1 className="text-xl font-bold">Bienvenue</h1>
             <FieldDescription>
-              Don&apos;t have an account? <a href="register">Sign up</a>
+              Vous n&apos;avez pas de compte ? <a href="register">Inscrivez-vous</a>
             </FieldDescription>
           </div>
           <Field>
-            <FieldLabel htmlFor="username">Username</FieldLabel>
+            <FieldLabel htmlFor="username">Nom d&apos;utilisateur</FieldLabel>
             <Input
               id="username"
               type="text"
-              placeholder="Username"
+              placeholder="Nom d&apos;utilisateur"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </Field>
           <Field>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <FieldLabel htmlFor="password">Mot de passe</FieldLabel>
             <Input
               id="password"
               type="password"
@@ -94,7 +94,7 @@ export function LoginForm({
           </Field>
           <Field>
             <Button type="submit" disabled={loading}>
-              {loading ? <Spinner /> : "Login"}
+              {loading ? <Spinner /> : "Se connecter"}
             </Button>
           </Field>
         </FieldGroup>

@@ -1,7 +1,7 @@
 export default function Budgets() {
   return (
     <div>
-      <p>Welcome to the budgets page.</p>
+      <p>Bienvenue sur la page des budgets.</p>
     </div>
   );
 }

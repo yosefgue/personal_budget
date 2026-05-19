@@ -4,14 +4,14 @@ export const transactionFormSchema = z
   .object({
     title: z
       .string()
-      .min(3, "Title must be at least 3 characters.")
-      .max(64, "Title must be at most 64 characters."),
+      .min(3, "Le titre doit contenir au moins 3 caracteres.")
+      .max(64, "Le titre doit contenir au maximum 64 caracteres."),
 
     amount: z
       .string()
-      .min(1, "Amount is required.")
+      .min(1, "Le montant est requis.")
       .refine((value) => Number(value) > 0, {
-        message: "Amount must be greater than 0.",
+        message: "Le montant doit etre superieur a 0.",
       }),
 
     type: z.enum(["income", "expense", "transfer_in", "transfer_out"]),
@@ -30,7 +30,7 @@ export const transactionFormSchema = z
         ctx.addIssue({
           path: ["category"],
           code: z.ZodIssueCode.custom,
-          message: "Category is required.",
+          message: "La categorie est requise.",
         })
       }
     }

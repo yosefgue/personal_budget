@@ -63,13 +63,13 @@ export default function Page() {
       const data = await response.json()
       setChatMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.answer ?? "No response." },
+        { role: "assistant", content: data.answer ?? "Pas de reponse." },
       ])
     } catch (chatError) {
       console.error(chatError)
       setChatMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Sorry, I could not respond right now." },
+        { role: "assistant", content: "Desole, je ne peux pas repondre pour l'instant." },
       ])
     } finally {
       setChatLoading(false)
@@ -100,10 +100,10 @@ export default function Page() {
             <Card className="w-80 shadow-lg sm:w-96">
               <CardHeader className="relative pb-2 pr-10">
                 <CardTitle className="text-base font-semibold">
-                  AI Assistant
+                  Assistant IA
                 </CardTitle>
                 <CardDescription>
-                  Ask about your budget
+                  Posez une question sur votre budget
                 </CardDescription>
                 <Button
                   variant="ghost"
@@ -118,7 +118,7 @@ export default function Page() {
                 <div className="flex-1 space-y-3 overflow-auto pr-2">
                   {chatMessages.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      Start a conversation to get tips.
+                      Demarrez une conversation pour obtenir des conseils.
                     </p>
                   ) : (
                     chatMessages.map((message, index) => (
@@ -152,14 +152,14 @@ export default function Page() {
                         handleSendMessage()
                       }
                     }}
-                    placeholder="Ask something..."
+                    placeholder="Posez une question..."
                     disabled={chatLoading}
                   />
                   <Button
                     onClick={handleSendMessage}
                     disabled={chatLoading || !chatInput.trim()}
                   >
-                    {chatLoading ? "..." : "Send"}
+                    {chatLoading ? "..." : "Envoyer"}
                   </Button>
                 </div>
               </CardContent>

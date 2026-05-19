@@ -158,8 +158,8 @@ def get_dashboard_insights(user):
         return [
             {
                 "type": "info",
-                "title": "No income data",
-                "message": "Add at least one income transaction to receive personalized insights.",
+                "title": "Pas de revenus",
+                "message": "Ajoutez au moins une transaction de revenu pour obtenir des analyses personnalisees.",
             }
         ]
 
@@ -198,50 +198,50 @@ def get_dashboard_insights(user):
     if average_expenses > average_income:
         insights.append({
             "type": "warning",
-            "title": "Expenses are higher than income",
-            "message": "Your recent expenses are higher than your income. Try reviewing your main spending categories.",
+            "title": "Depenses superieures aux revenus",
+            "message": "Vos depenses recentes sont superieures a vos revenus. Revoyez vos principales categories.",
         })
 
     if fixed_expenses > average_income * Decimal("0.50"):
         insights.append({
             "type": "warning",
-            "title": "Fixed expenses are high",
-            "message": "Your rent and bills take a large part of your income. This may reduce your ability to save regularly.",
+            "title": "Depenses fixes elevees",
+            "message": "Le loyer et les factures prennent une grande part de vos revenus. Cela peut reduire votre capacite d'epargne.",
         })
 
     if non_essential_expenses > average_income * Decimal("0.30"):
         insights.append({
             "type": "warning",
-            "title": "Non-essential spending is high",
-            "message": "Your shopping, entertainment, subscriptions or travel expenses are high compared to your income.",
+            "title": "Depenses non essentielles elevees",
+            "message": "Vos achats, loisirs, abonnements ou voyages sont eleves par rapport a vos revenus.",
         })
 
     if food_expenses > average_income * Decimal("0.20"):
         insights.append({
             "type": "warning",
-            "title": "Food spending is high",
-            "message": "Your food spending is high compared to your income. Planning meals may help reduce this cost.",
+            "title": "Depenses alimentaires elevees",
+            "message": "Vos depenses alimentaires sont elevees par rapport a vos revenus. Planifier les repas peut aider.",
         })
 
     if savings_to_goals < average_income * Decimal("0.15"):
         insights.append({
             "type": "info",
-            "title": "Savings toward goals are low",
-            "message": "Your savings toward goals are low compared to your income. Try setting aside money at the beginning of the month.",
+            "title": "Epargne vers les objectifs faible",
+            "message": "Votre epargne vers les objectifs est faible. Mettez de cote des le debut du mois.",
         })
 
     if main_wallet.balance < average_income * Decimal("0.10"):
         insights.append({
             "type": "warning",
-            "title": "Main wallet balance is low",
-            "message": "Your available balance is low. Keeping a small safety margin can help you avoid difficulties.",
+            "title": "Solde du portefeuille principal faible",
+            "message": "Votre solde disponible est faible. Garder une petite marge de securite peut aider.",
         })
 
     if not insights:
         insights.append({
             "type": "success",
-            "title": "Good financial balance",
-            "message": "Your recent spending and saving behavior looks balanced.",
+            "title": "Bon equilibre financier",
+            "message": "Vos depenses et votre epargne recentes semblent equilibrees.",
         })
 
     return insights[:4]
@@ -256,24 +256,36 @@ class FinanceAIService:
 
     def generate_advice(self, user_message: str, financial_context: str) -> str:
         prompt = f"""
-    You are a personal finance assistant inside a budgeting web application.
+            You are a personal finance assistant inside a budgeting web application.
 
-    Rules:
-    - Answer the user's question directly.
-    - Use the provided data whenever relevant and reference it briefly.
-    - You may give general best-practice tips when the question is broad.
-    - Do not invent specific transactions, balances, income, categories, or totals.
-    - Do not modify wallet balances.
-    - Do not create transactions.
-    - If the data is incomplete, say the advice is approximate.
-    - Keep the answer short and clear (3-6 bullet points max).
+            Your main goal:
+            - Help the user understand their financial situation.
+            - Give useful financial advice based on their real data.
+            - Identify what may be eating their budget.
+            - Suggest practical ways to improve spending, saving, and goal progress.
+            - Encourage good financial habits such as saving regularly, reducing unnecessary expenses, and planning ahead.
 
-    User financial data (JSON):
-    {financial_context}
+            Rules:
+            - Answer in the same language as the user's question.
+            - If the user's language is unclear, answer in French.
+            - Use simple, natural and clear language.
+            - Answer the user's question directly.
+            - Use the provided financial data whenever relevant and reference it briefly.
+            - If you notice a spending category taking too much budget, mention it clearly.
+            - You may give general best-practice tips when the question is broad.
+            - Do not invent specific transactions, balances, income, categories, or totals.
+            - Do not modify wallet balances.
+            - Do not create transactions.
+            - Do not give risky financial, investment, tax, or legal advice.
+            - If the data is incomplete, say the advice is approximate.
+            - Keep the answer short and clear, 3 to 6 bullet points maximum.
 
-    User question:
-    {user_message}
-    """
+            User financial data (JSON):
+            {financial_context}
+
+            User question:
+            {user_message}
+        """
 
         response = self.client.models.generate_content(
             model=settings.GEMINI_MODEL,

@@ -58,14 +58,14 @@ type GoalSuggestion = {
 const formSchema = z.object({
   name: z
     .string()
-    .min(3, "Name must be at least 3 characters.")
-    .max(64, "Name must be at most 64 characters."),
+    .min(3, "Le nom doit contenir au moins 3 caracteres.")
+    .max(64, "Le nom doit contenir au maximum 64 caracteres."),
 
   target_amount: z
     .string()
-    .min(1, "Amount is required.")
+    .min(1, "Le montant est requis.")
     .refine((value) => Number(value) > 0, {
-      message: "Amount must be greater than 0.",
+      message: "Le montant doit etre superieur a 0.",
     }),
 
 })
@@ -73,9 +73,9 @@ const formSchema = z.object({
 const transferSchema = z.object({
   amount: z
     .string()
-    .min(1, "Amount is required.")
+    .min(1, "Le montant est requis.")
     .refine((value) => Number(value) > 0, {
-      message: "Amount must be greater than 0.",
+      message: "Le montant doit etre superieur a 0.",
     }),
 })
 
@@ -92,6 +92,16 @@ function getGoalProgress(goal: Goal) {
 
   return Math.min((currentAmount / targetAmount) * 100, 100)
 }
+
+  function getGoalStatusLabel(status: Goal["status"]) {
+    switch (status) {
+      case "completed":
+        return "Termine"
+      case "active":
+      default:
+        return "Actif"
+    }
+  }
 
 function formatMonthYear(date: Date) {
   return date.toLocaleDateString(undefined, { month: "short", year: "numeric" })
@@ -151,7 +161,7 @@ export default function Goals() {
     if (!response.ok) {
       const errorData = await response.json().catch(() => null)
       console.error("Fetch goals error:", response.status, errorData)
-      throw new Error("Failed to fetch goals")
+      throw new Error("Echec du chargement des objectifs")
     }
 
     const data = await response.json()
@@ -184,7 +194,7 @@ export default function Goals() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         console.error("Create goal error:", response.status, errorData)
-        throw new Error("Failed to create goal")
+        throw new Error("Echec de la creation de l'objectif")
       }
 
       const createdGoal: Goal = await response.json()
@@ -192,10 +202,10 @@ export default function Goals() {
       setGoals((prev) => [createdGoal, ...prev])
       createForm.reset()
       setDialogOpen(false)
-      toast.success("Goal created successfully.")
+      toast.success("Objectif cree avec succes.")
     } catch (error) {
       console.error(error)
-      toast.error("Could not create goal.")
+      toast.error("Impossible de creer l'objectif.")
     } finally {
       setCreating(false)
     }
@@ -228,17 +238,17 @@ export default function Goals() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         console.error("Transfer goal error:", response.status, errorData)
-        throw new Error("Failed to transfer to goal")
+        throw new Error("Echec du transfert vers l'objectif")
       }
 
       await fetchGoals()
       transferForm.reset()
       setTransferDialogOpen(false)
       setSelectedGoal(null)
-      toast.success("Savings transfer completed.")
+      toast.success("Transfert d'epargne termine.")
     } catch (error) {
       console.error(error)
-      toast.error("Could not transfer savings.")
+      toast.error("Impossible de transferer l'epargne.")
     } finally {
       setTransferring(false)
     }
@@ -268,16 +278,16 @@ export default function Goals() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         console.error("Delete goal error:", response.status, errorData)
-        throw new Error("Failed to delete goal")
+        throw new Error("Echec de la suppression de l'objectif")
       }
 
       setGoals((prev) => prev.filter((goal) => goal.id !== goalToDelete.id))
       setDeleteDialogOpen(false)
       setGoalToDelete(null)
-      toast.success("Goal deleted successfully.")
+      toast.success("Objectif supprime avec succes.")
     } catch (error) {
       console.error(error)
-      toast.error("Could not delete goal.")
+      toast.error("Impossible de supprimer l'objectif.")
     } finally {
       setDeleting(false)
     }
@@ -300,13 +310,13 @@ export default function Goals() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
         console.error("Fetch suggestions error:", response.status, errorData)
-        throw new Error("Failed to fetch suggestions")
+        throw new Error("Echec du chargement des suggestions")
       }
 
       const data = await response.json()
 
       if (!Array.isArray(data)) {
-        toast.info("Not enough income data to generate suggestions.")
+        toast.info("Pas assez de revenus pour generer des suggestions.")
         setSuggestions({})
         return
       }
@@ -322,7 +332,7 @@ export default function Goals() {
       setSuggestions(next)
     } catch (error) {
       console.error(error)
-      toast.error("Could not generate suggestions.")
+      toast.error("Impossible de generer des suggestions.")
     } finally {
       setLoadingSuggestions(false)
     }
@@ -336,7 +346,7 @@ export default function Goals() {
         await fetchGoals()
       } catch (error) {
         console.error(error)
-        setError("Could not load goals.")
+        setError("Impossible de charger les objectifs.")
       } finally {
         setLoading(false)
       }
@@ -348,14 +358,14 @@ export default function Goals() {
   const createGoalDialog = (
     <Dialog open={createDialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
-        <Button>Add goal</Button>
+        <Button>Ajouter un objectif</Button>
       </DialogTrigger>
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add goal</DialogTitle>
+          <DialogTitle>Ajouter un objectif</DialogTitle>
           <DialogDescription>
-            Add a name and target amount for this goal.
+            Ajoutez un nom et un montant cible pour cet objectif.
           </DialogDescription>
         </DialogHeader>
 
@@ -371,14 +381,14 @@ export default function Goals() {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="create-goal-name">
-                    Name
+                    Nom
                   </FieldLabel>
 
                   <Input
                     {...field}
                     id="create-goal-name"
                     aria-invalid={fieldState.invalid}
-                    placeholder="car"
+                    placeholder="voiture"
                     autoComplete="off"
                   />
 
@@ -395,7 +405,7 @@ export default function Goals() {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="create-goal-amount">
-                    Target amount (DH)
+                    Montant cible (DH)
                   </FieldLabel>
 
                   <Input
@@ -422,12 +432,12 @@ export default function Goals() {
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline" disabled={creating}>
-              Cancel
+              Annuler
             </Button>
           </DialogClose>
 
           <Button type="submit" form="create-goal-form" disabled={creating}>
-            {creating ? <Spinner /> : "Save"}
+            {creating ? <Spinner /> : "Enregistrer"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -448,9 +458,9 @@ export default function Goals() {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add savings</DialogTitle>
+          <DialogTitle>Ajouter de l'epargne</DialogTitle>
           <DialogDescription>
-            Transfer money from your main wallet to this goal.
+            Transferez de l'argent depuis votre portefeuille principal.
           </DialogDescription>
         </DialogHeader>
 
@@ -466,7 +476,7 @@ export default function Goals() {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="transfer-goal-amount">
-                    Amount (DH)
+                    Montant (DH)
                   </FieldLabel>
 
                   <Input
@@ -492,12 +502,12 @@ export default function Goals() {
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline" disabled={transferring}>
-              Cancel
+              Annuler
             </Button>
           </DialogClose>
 
           <Button type="submit" form="transfer-goal-form" disabled={transferring}>
-            {transferring ? <Spinner /> : "Transfer"}
+            {transferring ? <Spinner /> : "Transferer"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -517,21 +527,21 @@ export default function Goals() {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete goal?</DialogTitle>
+          <DialogTitle>Supprimer l'objectif ?</DialogTitle>
           <DialogDescription>
-            This will delete the goal and discard any funds in its wallet.
+            Cela supprimera l'objectif et les fonds associes.
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline" disabled={deleting}>
-              Cancel
+              Annuler
             </Button>
           </DialogClose>
 
           <Button type="button" variant="destructive" disabled={deleting} onClick={deleteGoal}>
-            {deleting ? <Spinner /> : "Delete"}
+            {deleting ? <Spinner /> : "Supprimer"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -549,7 +559,7 @@ export default function Goals() {
           onClick={fetchSuggestions}
           disabled={loadingSuggestions}
         >
-          {loadingSuggestions ? <Spinner /> : "Generate suggestions"}
+          {loadingSuggestions ? <Spinner /> : "Generer des suggestions"}
         </Button>
       </div>
 
@@ -571,10 +581,10 @@ export default function Goals() {
               <IconTargetArrow className="h-6 w-6" />
             </EmptyMedia>
 
-            <EmptyTitle>No goals yet</EmptyTitle>
+            <EmptyTitle>Aucun objectif pour le moment</EmptyTitle>
 
             <EmptyDescription>
-              Once you add a goal, it will appear here.
+              Une fois ajoute, l'objectif apparaitra ici.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -599,7 +609,7 @@ export default function Goals() {
                             : undefined
                         }
                       >
-                        {goal.status}
+                        {getGoalStatusLabel(goal.status)}
                       </Badge>
 
                       <Button
@@ -610,7 +620,7 @@ export default function Goals() {
                           setGoalToDelete(goal)
                           setDeleteDialogOpen(true)
                         }}
-                        aria-label={`Delete ${goal.name}`}
+                        aria-label={`Supprimer ${goal.name}`}
                       >
                         <IconTrash className="h-4 w-4" />
                       </Button>
@@ -622,7 +632,7 @@ export default function Goals() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Progress
+                        Progression
                       </span>
 
                       <span className="font-medium">
@@ -636,7 +646,7 @@ export default function Goals() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-xl border p-3">
                       <p className="text-xs text-muted-foreground">
-                        Current
+                        Actuel
                       </p>
 
                       <p className="font-semibold">
@@ -646,7 +656,7 @@ export default function Goals() {
 
                     <div className="rounded-xl border p-3">
                       <p className="text-xs text-muted-foreground">
-                        Target
+                        Cible
                       </p>
 
                       <p className="font-semibold">
@@ -664,7 +674,7 @@ export default function Goals() {
                       setTransferDialogOpen(true)
                     }}
                   >
-                    Add savings
+                    Ajouter de l'epargne
                   </Button>
 
                   <div className="rounded-xl border border-dashed p-3 text-sm">
@@ -673,22 +683,22 @@ export default function Goals() {
                     {suggestion?.suggested_amount ? (
                       <div className="mt-2 space-y-1">
                         <p className="font-medium">
-                          {Number(suggestion.suggested_amount).toFixed(2)} DH / month
-                          {suggestion.estimated_months ? ` for ${suggestion.estimated_months} months` : ""}
+                          {Number(suggestion.suggested_amount).toFixed(2)} DH / mois
+                          {suggestion.estimated_months ? ` pendant ${suggestion.estimated_months} mois` : ""}
                         </p>
                         {targetDate ? (
                           <p className="text-xs text-muted-foreground">
-                            Target date: {formatMonthYear(targetDate)}
+                            Date cible : {formatMonthYear(targetDate)}
                           </p>
                         ) : (
                           <p className="text-xs text-muted-foreground">
-                            Target date unavailable
+                            Date cible indisponible
                           </p>
                         )}
                       </div>
                     ) : (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        No suggestion generated yet.
+                        Aucune suggestion pour le moment.
                       </p>
                     )}
                   </div>

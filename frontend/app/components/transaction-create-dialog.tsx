@@ -61,14 +61,14 @@ export function TransactionCreateDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>Add transaction</Button>
+        <Button>Ajouter une transaction</Button>
       </DialogTrigger>
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add transaction</DialogTitle>
+          <DialogTitle>Ajouter une transaction</DialogTitle>
           <DialogDescription>
-            Add a title, amount, type, category, and date for this transaction.
+            Ajoutez un titre, un montant, un type, une categorie et une date.
           </DialogDescription>
         </DialogHeader>
 
@@ -85,14 +85,14 @@ export function TransactionCreateDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="create-transaction-title">
-                      Title
+                      Titre
                     </FieldLabel>
 
                     <Input
                       {...field}
                       id="create-transaction-title"
                       aria-invalid={fieldState.invalid}
-                      placeholder="Groceries"
+                      placeholder="Courses"
                       autoComplete="off"
                     />
 
@@ -109,7 +109,7 @@ export function TransactionCreateDialog({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="create-transaction-amount">
-                      Amount
+                      Montant
                     </FieldLabel>
 
                     <Input
@@ -145,12 +145,12 @@ export function TransactionCreateDialog({
                       }}
                     >
                       <SelectTrigger aria-invalid={fieldState.invalid}>
-                        <SelectValue placeholder="Select type" />
+                        <SelectValue placeholder="Choisir un type" />
                       </SelectTrigger>
 
                       <SelectContent>
-                        <SelectItem value="income">Income</SelectItem>
-                        <SelectItem value="expense">Expense</SelectItem>
+                        <SelectItem value="income">Revenu</SelectItem>
+                        <SelectItem value="expense">Depense</SelectItem>
                       </SelectContent>
                     </Select>
                   </Field>
@@ -162,11 +162,11 @@ export function TransactionCreateDialog({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Category</FieldLabel>
+                    <FieldLabel>Categorie</FieldLabel>
 
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger aria-invalid={fieldState.invalid}>
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="Choisir une categorie" />
                       </SelectTrigger>
 
                       <SelectContent>
@@ -206,7 +206,7 @@ export function TransactionCreateDialog({
                     {...field}
                     id="create-transaction-description"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Optional note about this transaction"
+                    placeholder="Note optionnelle sur cette transaction"
                     className="min-h-[88px]"
                   />
 
@@ -223,7 +223,7 @@ export function TransactionCreateDialog({
               render={({ field }) => (
                 <Field orientation="horizontal">
                   <FieldLabel htmlFor="create-transaction-recurring">
-                    Recurring monthly
+                    Mensuel recurrent
                   </FieldLabel>
 
                   <Switch
@@ -240,7 +240,7 @@ export function TransactionCreateDialog({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Transaction date</FieldLabel>
+                  <FieldLabel>Date de transaction</FieldLabel>
 
                   <Popover>
                     <PopoverTrigger asChild>
@@ -254,7 +254,7 @@ export function TransactionCreateDialog({
 
                         {field.value
                           ? formatDateForDisplay(field.value)
-                          : "Pick a date"}
+                          : "Choisir une date"}
                       </Button>
                     </PopoverTrigger>
 
@@ -287,12 +287,12 @@ export function TransactionCreateDialog({
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">
-              Cancel
+              Annuler
             </Button>
           </DialogClose>
 
           <Button type="submit" form="create-transaction-form">
-            Save
+            Enregistrer
           </Button>
         </DialogFooter>
       </DialogContent>

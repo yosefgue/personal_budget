@@ -68,14 +68,14 @@ function toDateKey(date: Date) {
 }
 
 function formatShortDate(date: Date) {
-	return date.toLocaleDateString("en-GB", {
+	return date.toLocaleDateString("fr-FR", {
 		month: "short",
 		day: "2-digit",
 	})
 }
 
 function formatTransactionDate(date: Date) {
-	return date.toLocaleDateString("en-GB", {
+	return date.toLocaleDateString("fr-FR", {
 		month: "short",
 		day: "2-digit",
 		year: "numeric",
@@ -168,15 +168,15 @@ export default function DashboardHome() {
 				])
 
 				if (!walletsResponse.ok) {
-					throw new Error("Failed to fetch wallets")
+					throw new Error("Echec du chargement des portefeuilles")
 				}
 
 				if (!transactionsResponse.ok) {
-					throw new Error("Failed to fetch transactions")
+					throw new Error("Echec du chargement des transactions")
 				}
 
 				if (!insightsResponse.ok) {
-					throw new Error("Failed to fetch insights")
+					throw new Error("Echec du chargement des analyses")
 				}
 
 				const walletsData = await walletsResponse.json()
@@ -188,7 +188,7 @@ export default function DashboardHome() {
 				setInsights(insightsData)
 			} catch (loadError) {
 				console.error(loadError)
-				setError("Could not load summary data.")
+				setError("Impossible de charger le resume.")
 			} finally {
 				setLoading(false)
 			}
@@ -299,7 +299,7 @@ export default function DashboardHome() {
 				continue
 			}
 
-			const category = transaction.category_name ?? "Uncategorized"
+			const category = transaction.category_name ?? "Sans categorie"
 			const amount = Number(transaction.amount)
 			totals.set(category, (totals.get(category) ?? 0) + amount)
 		}
@@ -366,7 +366,7 @@ export default function DashboardHome() {
 			<section className="space-y-3">
 				<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 					<SummaryCard
-						title="Main wallet balance"
+						  title="Solde du portefeuille principal"
 						value={summary.mainBalance}
 						badgeClassName="bg-blue-500/15"
 						icon={
@@ -374,7 +374,7 @@ export default function DashboardHome() {
 						}
 					/>
 					<SummaryCard
-						title="Monthly income"
+						  title="Revenus du mois"
 						value={summary.income}
 						badgeClassName="bg-green-500/15"
 						icon={
@@ -382,7 +382,7 @@ export default function DashboardHome() {
 						}
 					/>
 					<SummaryCard
-						title="Monthly expenses"
+						  title="Depenses du mois"
 						value={summary.expenses}
 						badgeClassName="bg-red-500/15"
 						icon={
@@ -390,7 +390,7 @@ export default function DashboardHome() {
 						}
 					/>
 					<SummaryCard
-						title="Savings added"
+						  title="Epargne ajoutee"
 						value={summary.savings}
 						badgeClassName="bg-blue-500/15"
 						icon={
@@ -405,25 +405,25 @@ export default function DashboardHome() {
 					<Card>
 						<CardHeader className="pb-0">
 							<CardTitle className="text-base font-semibold">
-								Income and expense
+								Revenus et depenses
 							</CardTitle>
 							<CardDescription>
-								Showing income and expense for the last month
+								Revenus et depenses du dernier mois
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="pt-4">
 							<ChartContainer
 								className="h-56 w-full"
 								config={{
-									income: {
-										label: "Income",
+										income: {
+											label: "Revenus",
 										theme: {
 											light: "#60a5fa",
 											dark: "#60a5fa",
 										},
 									},
-									expense: {
-										label: "Expenses",
+										expense: {
+											label: "Depenses",
 										theme: {
 											light: "#2563eb",
 											dark: "#2563eb",
@@ -473,7 +473,7 @@ export default function DashboardHome() {
 										stroke="var(--color-income)"
 										fill="url(#income)"
 										strokeWidth={2}
-										name="Income"
+										name="Revenus"
 									/>
 									<Area
 										type="monotone"
@@ -481,7 +481,7 @@ export default function DashboardHome() {
 										stroke="var(--color-expense)"
 										fill="url(#expense)"
 										strokeWidth={2}
-										name="Expenses"
+										name="Depenses"
 									/>
 								</AreaChart>
 							</ChartContainer>
@@ -490,13 +490,13 @@ export default function DashboardHome() {
 					<Card>
 						<CardHeader className="pb-0">
 							<CardTitle className="text-base font-semibold">
-								Recent transactions
+								Transactions recentes
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="pt-4">
 							{recentTransactions.length === 0 ? (
 								<p className="text-sm text-muted-foreground">
-									No transactions yet.
+									Aucune transaction pour le moment.
 								</p>
 							) : (
 								<div className="space-y-4">
@@ -546,16 +546,16 @@ export default function DashboardHome() {
 					<Card>
 						<CardHeader className="pb-0">
 							<CardTitle className="text-base font-semibold">
-								Spending by category
+								Depenses par categorie
 							</CardTitle>
 							<CardDescription>
-								Expenses grouped by category
+								Depenses groupees par categorie
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="pt-4">
 							{categorySummary.data.length === 0 ? (
 								<p className="text-sm text-muted-foreground">
-									No expense data yet.
+									Aucune donnee de depense pour le moment.
 								</p>
 							) : (
 								<div className="flex flex-col gap-6 sm:flex-row sm:items-center">
@@ -585,7 +585,7 @@ export default function DashboardHome() {
 
 									<div className="flex-1 space-y-3">
 										<div>
-											<p className="text-xs text-muted-foreground">Total spent</p>
+											  <p className="text-xs text-muted-foreground">Total depense</p>
 											<p className="text-xl font-semibold">
 												{formatCurrency(categorySummary.total)}
 											</p>
@@ -619,16 +619,16 @@ export default function DashboardHome() {
 					<Card>
 						<CardHeader className="pb-0">
 							<CardTitle className="text-base font-semibold">
-								Insights
+								Analyses
 							</CardTitle>
 							<CardDescription>
-								Quick signals from your recent activity
+								Signaux rapides de votre activite recente
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="flex h-64 flex-col pt-4">
 							{insights.length === 0 ? (
 								<p className="text-sm text-muted-foreground">
-									No insights available yet.
+									Aucune analyse disponible pour le moment.
 								</p>
 							) : (
 								<ul className="space-y-3 overflow-auto pr-2">

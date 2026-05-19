@@ -26,7 +26,7 @@ export default function WalletCard({ title, amount }: WalletCardProps) {
       </CardHeader>
 
       <CardContent>
-        <p className="text-sm text-muted-foreground">Available balance</p>
+        <p className="text-sm text-muted-foreground">Solde disponible</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">
           {amount} dh
         </h1>
